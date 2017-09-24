@@ -147,6 +147,188 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-我的-spring-mybatis-学习笔记-二-入门程序一" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2017/09/24/我的-spring-mybatis-学习笔记-二-入门程序一/">我的笔记</a>
+    </h1>
+  
+
+        
+        <a href="/2017/09/24/我的-spring-mybatis-学习笔记-二-入门程序一/" class="archive-article-date">
+  	<time datetime="2017-09-24T07:12:45.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-09-24</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>mybatis学习笔记(3)-入门程序一</p>
+<p>工程结构<br>在IDEA中新建了一个普通的java项目，新建文件夹lib,加入jar包,工程结构如图。</p>
+<p>• log4j.properties</p>
+<h1 id="Global-logging-configuration"><a href="#Global-logging-configuration" class="headerlink" title="Global logging configuration"></a>Global logging configuration</h1><p>log4j.rootLogger=DEBUG, stdout</p>
+<h1 id="Console-output…"><a href="#Console-output…" class="headerlink" title="Console output…"></a>Console output…</h1><p>log4j.appender.stdout=org.apache.log4j.ConsoleAppender<br>log4j.appender.stdout.layout=org.apache.log4j.PatternLayout<br>log4j.appender.stdout.layout.ConversionPattern=%5p [%t] - %m%n<br>• SqlMapConfig.xml<br>&lt;?xml version=”1.0” encoding=”UTF-8” ?&gt;<br>&lt;!DOCTYPE configuration<br>        PUBLIC “-//mybatis.org//DTD Config 3.0//EN”<br>        “<a href="http://mybatis.org/dtd/mybatis-3-config.dtd&quot;&gt;" target="_blank" rel="external">http://mybatis.org/dtd/mybatis-3-config.dtd&quot;&gt;</a></p>
+<p><configuration><br>    <!-- 和spring整合后 environments配置将废除--><br>    <environments default="development"><br>        <environment id="development"><br>            <!-- 使用jdbc事务管理，事务控制由mybatis--><br>            <transactionmanager type="JDBC"><br>            <!-- 数据库连接池,由mybatis管理--><br>            <datasource type="POOLED"><br>                <property name="driver" value="com.mysql.jdbc.Driver"><br>                <property name="url" value="jdbc:mysql://120.25.162.238:3306/mybatis001?characterEncoding=utf-8"><br>                <property name="username" value="root"><br>                <property name="password" value="123"><br>            </property></property></property></property></datasource><br>        </transactionmanager></environment><br>    </environments></configuration></p>
+<p><br>映射文件<br>• sqlmap/User.xml<br>&lt;?xml version=”1.0” encoding=”UTF-8” ?&gt;<br>&lt;!DOCTYPE mapper<br>        PUBLIC “-//mybatis.org//DTD Mapper 3.0//EN”<br>        “<a href="http://mybatis.org/dtd/mybatis-3-mapper.dtd&quot;&gt;" target="_blank" rel="external">http://mybatis.org/dtd/mybatis-3-mapper.dtd&quot;&gt;</a><br><!-- namespace 命名空间，作用就是对sql进行分类化管理,理解为sql隔离
+ 注意：使用mapper代理方法开发，namespace有特殊重要的作用
+ --></p>
+<p><mapper namespace="test"><br>    <!-- 在映射文件中配置很多sql语句 --><br>    <!--需求:通过id查询用户表的记录 --><br>    &lt;!– 通过select执行数据库查询<br>     id:标识映射文件中的sql，称为statement的id<br>     将sql语句封装到mappedStatement对象中，所以将id称为statement的id<br>     parameterType:指定输入参数的类型</mapper></p>
+<pre><code> #{}标示一个占位符,
+ #{value}其中value表示接收输入参数的名称，如果输入参数是简单类型，那么#{}中的值可以任意。
+
+ resultType：指定sql输出结果的映射的java对象类型，select指定resultType表示将单条记录映射成java对象
+ --&gt;
+&lt;select id=&quot;findUserById&quot; parameterType=&quot;int&quot; resultType=&quot;com.iot.mybatis.po.User&quot;&gt;
+    SELECT * FROM  user  WHERE id=#{value}
+&lt;/select&gt;
+
+&lt;!-- 根据用户名称模糊查询用户信息，可能返回多条
+resultType：指定就是单条记录所映射的java对象类型
+${}:表示拼接sql串，将接收到参数的内容不加任何修饰拼接在sql中。
+使用${}拼接sql，引起 sql注入
+${value}：接收输入参数的内容，如果传入类型是简单类型，${}中只能使用value
+ --&gt;
+&lt;select id=&quot;findUserByName&quot; parameterType=&quot;java.lang.String&quot; resultType=&quot;com.iot.mybatis.po.User&quot;&gt;
+    SELECT * FROM user WHERE username LIKE &apos;%${value}%&apos;
+&lt;/select&gt;
+</code></pre><p><br>在sqlMapConfig.xml中加载User.xml<br><!-- 加载映射文件--></p>
+<p><mappers><br>    <mapper resource="sqlmap/User.xml"><br></mapper></mappers><br>程序代码<br>• po类User.java<br>package com.iot.mybatis.po;</p>
+<p>import java.util.Date;</p>
+<p>/**</p>
+<ul>
+<li><p>Created by Administrator on 2016/2/21.<br>*/<br>public class User {<br> //属性名要和数据库表的字段对应<br> private int id;<br> private String username;// 用户姓名<br> private String sex;// 性别<br> private Date birthday;// 生日<br> private String address;// 地址</p>
+<p> public int getId() {</p>
+<pre><code>return id;
+</code></pre><p> }</p>
+<p> public void setId(int id) {</p>
+<pre><code>this.id = id;
+</code></pre><p> }</p>
+<p> public String getUsername() {</p>
+<pre><code>return username;
+</code></pre><p> }</p>
+<p> public void setUsername(String username) {</p>
+<pre><code>this.username = username;
+</code></pre><p> }</p>
+<p> public String getSex() {</p>
+<pre><code>return sex;
+</code></pre><p> }</p>
+<p> public void setSex(String sex) {</p>
+<pre><code>this.sex = sex;
+</code></pre><p> }</p>
+<p> public Date getBirthday() {</p>
+<pre><code>return birthday;
+</code></pre><p> }</p>
+<p> public void setBirthday(Date birthday) {</p>
+<pre><code>this.birthday = birthday;
+</code></pre><p> }</p>
+<p> public String getAddress() {</p>
+<pre><code>return address;
+</code></pre><p> }</p>
+<p> public void setAddress(String address) {</p>
+<pre><code>this.address = address;
+</code></pre><p> }</p>
+<p> @Override<br> public String toString() {</p>
+<pre><code>return &quot;User [id=&quot; + id + &quot;, username=&quot; + username + &quot;, sex=&quot; + sex
+        + &quot;, birthday=&quot; + birthday + &quot;, address=&quot; + address + &quot;]&quot;;
+</code></pre><p> }<br>}<br>• 测试代码<br>package com.iot.mybatis.first;</p>
+</li>
+</ul>
+<p>import com.iot.mybatis.po.User;<br>import org.apache.ibatis.io.Resources;<br>import org.apache.ibatis.session.SqlSession;<br>import org.apache.ibatis.session.SqlSessionFactory;<br>import org.apache.ibatis.session.SqlSessionFactoryBuilder;<br>import org.junit.Test;</p>
+<p>import java.io.IOException;<br>import java.io.InputStream;<br>import java.util.List;</p>
+<p>/**</p>
+<ul>
+<li><p>Created by Administrator on 2016/2/23.<br>*/<br>public class MybatisFirst {</p>
+<p> //根据id查询用户信息，得到一条记录结果</p>
+<p> @Test<br> public void findUserByIdTest() throws IOException{</p>
+<pre><code>// mybatis配置文件
+String resource = &quot;SqlMapConfig.xml&quot;;
+// 得到配置文件流
+InputStream inputStream =  Resources.getResourceAsStream(resource);
+//创建会话工厂，传入mybatis配置文件的信息
+SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
+// 通过工厂得到SqlSession
+SqlSession sqlSession = sqlSessionFactory.openSession();
+
+// 通过SqlSession操作数据库
+// 第一个参数：映射文件中statement的id，等于=namespace+&quot;.&quot;+statement的id
+// 第二个参数：指定和映射文件中所匹配的parameterType类型的参数
+// sqlSession.selectOne结果 是与映射文件中所匹配的resultType类型的对象
+// selectOne查询出一条记录
+User user = sqlSession.selectOne(&quot;test.findUserById&quot;, 1);
+
+System.out.println(user);
+
+// 释放资源
+sqlSession.close();
+</code></pre><p> }</p>
+<p> // 根据用户名称模糊查询用户列表<br> @Test<br> public void findUserByNameTest() throws IOException {</p>
+<pre><code>// mybatis配置文件
+String resource = &quot;SqlMapConfig.xml&quot;;
+// 得到配置文件流
+InputStream inputStream = Resources.getResourceAsStream(resource);
+
+// 创建会话工厂，传入mybatis的配置文件信息
+SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder()
+        .build(inputStream);
+
+// 通过工厂得到SqlSession
+SqlSession sqlSession = sqlSessionFactory.openSession();
+// list中的user和映射文件中resultType所指定的类型一致
+List&lt;User&gt; list = sqlSession.selectList(&quot;test.findUserByName&quot;, &quot;小明&quot;);
+System.out.println(list);
+sqlSession.close();
+</code></pre><p> }</p>
+</li>
+</ul>
+<p>}<br>输出：<br>• findUserByIdTest()<br>DEBUG [main] - Logging initialized using ‘class org.apache.ibatis.logging.slf4j.Slf4jImpl’ adapter.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - Opening JDBC Connection<br>DEBUG [main] - Created connection 1857815974.<br>DEBUG [main] - Setting autocommit to false on JDBC Connection [com.mysql.jdbc.JDBC4Connection@6ebc05a6]<br>DEBUG [main] - ==&gt;  Preparing: SELECT <em> FROM user WHERE id=?<br>DEBUG [main] - ==&gt; Parameters: 1(Integer)<br>DEBUG [main] - &lt;==      Total: 1<br>User [id=1, username=王五, sex=2, birthday=null, address=null]<br>DEBUG [main] - Resetting autocommit to true on JDBC Connection [com.mysql.jdbc.JDBC4Connection@6ebc05a6]<br>DEBUG [main] - Closing JDBC Connection [com.mysql.jdbc.JDBC4Connection@6ebc05a6]<br>DEBUG [main] - Returned connection 1857815974 to pool.<br>• findUserByNameTest()<br>DEBUG [main] - Logging initialized using ‘class org.apache.ibatis.logging.slf4j.Slf4jImpl’ adapter.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - PooledDataSource forcefully closed/removed all connections.<br>DEBUG [main] - Opening JDBC Connection<br>DEBUG [main] - Created connection 1596467899.<br>DEBUG [main] - Setting autocommit to false on JDBC Connection [com.mysql.jdbc.JDBC4Connection@5f282abb]<br>DEBUG [main] - ==&gt;  Preparing: SELECT </em> FROM user WHERE username LIKE ‘%小明%’<br>DEBUG [main] - ==&gt; Parameters:<br>DEBUG [main] - &lt;==      Total: 3<br>[User [id=16, username=张小明, sex=1, birthday=null, address=河南郑州], User [id=22, username=陈小明, sex=1, birthday=null, address=河南郑州], User [id=25, username=陈小明, sex=1, birthday=null, address=河南郑州]]<br>DEBUG [main] - Resetting autocommit to true on JDBC Connection [com.mysql.jdbc.JDBC4Connection@5f282abb]<br>DEBUG [main] - Closing JDBC Connection [com.mysql.jdbc.JDBC4Connection@5f282abb]<br>DEBUG [main] - Returned connection 1596467899 to pool.<br>总结<br>• parameterType<br>在映射文件中通过parameterType指定输入参数的类型<br>• resultType<br>在映射文件中通过resultType指定输出结果的类型<br>• #{}和${} </p>
+<p>#{}表示一个占位符号;<br>${}表示一个拼接符号，会引起sql注入，所以不建议使用<br>• selectOne和selectList<br>selectOne表示查询一条记录进行映射，使用selectList也可以使用，只不过只有一个对象<br>selectList表示查询出一个列表(参数记录)进行映射，不嗯能够使用selectOne查，不然会报下面的错:<br>org.apache.ibatis.exceptions.TooManyResultsException: Expected one result (or null) to be returned by selectOne(), but found: 3</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2017/09/24/我的-spring-mybatis-学习笔记-二-入门程序一/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-我的-spring-mybatis-学习笔记-一-mybatis概述" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
